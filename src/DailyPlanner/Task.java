@@ -4,32 +4,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 public class Task {
-
-    public enum TypeTask {
-        WORKING("рабочая"),
-        PERSONAL("личная");
-
-        private String type;
-
-        TypeTask(String type) {
-            this.type = type;
-        }
-    }
-
-    public enum RepeatabilityOfTask {
-        SINGLE("разовая"),
-        DAILY("ежедневная"),
-        WEEKLY("еженедельная"),
-        MONTHLY("ежемесячная"),
-        YEARLY("ежегодная");
-
-        private String repeatability;
-
-        RepeatabilityOfTask(String repeatability) {
-            this.repeatability = repeatability;
-        }
-    }
-
+    private int id;
     private String nameTask;
     private String descriptionTask;
     private TypeTask typeTask;
@@ -39,58 +14,66 @@ public class Task {
     private boolean isRemoteTask;
 
     public Task(String nameTask, String descriptionTask, int typeTask, int repeatabilityOfTask, LocalDate dataTask) {
-        if (nameTask != null && !nameTask.isEmpty()) {
-            this.nameTask = nameTask;
-        } else {
-            throw new RuntimeException("Введите корректный заголовок задачи!");
+        this.id = TaskService.getDailyPlanner().size() + 1;
+        try {
+            if (nameTask != null && !nameTask.isEmpty()) {
+                this.nameTask = nameTask;
+            } else {
+                throw new InvalidParametrException();
+            }
+        } catch (InvalidParametrException e) {
+            System.out.println("Введите корректный заголовок задачи");
+            this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
         }
 
         this.descriptionTask = descriptionTask;
 
-        switch (typeTask) {
-            case 1:
-                this.typeTask = TypeTask.WORKING;
-                break;
-            case 2:
-                this.typeTask = TypeTask.PERSONAL;
-                break;
-            default:
-                System.out.println("Некорректно введен тип задачи - по умолчанию проставлен личный тип");
-                this.typeTask = TypeTask.PERSONAL;
-                break;
-        }
-
-        switch (repeatabilityOfTask) {
-            case 1:
-                this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
-                break;
-            case 2:
-                this.repeatabilityOfTask = RepeatabilityOfTask.DAILY;
-                break;
-            case 3:
-                this.repeatabilityOfTask = RepeatabilityOfTask.WEEKLY;
-                break;
-            case 4:
-                this.repeatabilityOfTask = RepeatabilityOfTask.MONTHLY;
-                break;
-            case 5:
-                this.repeatabilityOfTask = RepeatabilityOfTask.YEARLY;
-                break;
-            default:
-                System.out.println("Повторяемость задачи указана некорректно - по умолчанию проставлена разовая повторяемость");
-                this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
-                break;
+        try {
+            switch (typeTask) {
+                case 1:
+                    this.typeTask = TypeTask.WORKING;
+                    break;
+                case 2:
+                    this.typeTask = TypeTask.PERSONAL;
+                    break;
+                default:
+                    throw new InvalidParametrException();
+            }
+        } catch (InvalidParametrException e) {
+            System.out.println("Некорректно введен тип задачи - по умолчанию проставлен личный тип");
+            this.typeTask = TypeTask.PERSONAL;
         }
 
         try {
-            this.dataTask = dataTask;
-        } catch (RuntimeException e) {
-            System.out.println("Дата введена некорректно! Полю дата присвоена текущая дата");
+            switch (repeatabilityOfTask) {
+                case 1:
+                    this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
+                    break;
+                case 2:
+                    this.repeatabilityOfTask = RepeatabilityOfTask.DAILY;
+                    break;
+                case 3:
+                    this.repeatabilityOfTask = RepeatabilityOfTask.WEEKLY;
+                    break;
+                case 4:
+                    this.repeatabilityOfTask = RepeatabilityOfTask.MONTHLY;
+                    break;
+                case 5:
+                    this.repeatabilityOfTask = RepeatabilityOfTask.YEARLY;
+                    break;
+                default:
+                    throw new InvalidParametrException();
+            }
+        } catch (InvalidParametrException e) {
+            System.out.println("Повторяемость задачи указана некорректно - по умолчанию проставлена разовая повторяемость");
+            this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
         }
+
+        this.dataTask = dataTask;
 
         this.isRemoteTask = false;
 
-        TaskService.addNewTask(this);
+        System.out.println(TaskService.getDailyPlanner().size());
     }
 
     @Override
@@ -124,6 +107,10 @@ public class Task {
         return Objects.hash(nameTask, descriptionTask, typeTask, repeatabilityOfTask, dataTask, isRemoteTask);
     }
 
+    public int getId() {
+        return id;
+    }
+
     public String getNameTask() {
         return nameTask;
     }
@@ -148,47 +135,8 @@ public class Task {
         return typeTask;
     }
 
-    public void setTypeTask(int typeTask) {
-        switch (typeTask) {
-            case 1:
-                this.typeTask = TypeTask.WORKING;
-                break;
-            case 2:
-                this.typeTask = TypeTask.PERSONAL;
-                break;
-            default:
-                System.out.println("Некорректно введен тип задачи - по умолчанию проставлен личный тип");
-                this.typeTask = TypeTask.PERSONAL;
-                break;
-        }
-    }
-
     public RepeatabilityOfTask getRepeatabilityOfTask() {
         return repeatabilityOfTask;
-    }
-
-    public void setRepeatabilityOfTask(int repeatabilityOfTask) {
-        switch (repeatabilityOfTask) {
-            case 1:
-                this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
-                break;
-            case 2:
-                this.repeatabilityOfTask = RepeatabilityOfTask.DAILY;
-                break;
-            case 3:
-                this.repeatabilityOfTask = RepeatabilityOfTask.WEEKLY;
-                break;
-            case 4:
-                this.repeatabilityOfTask = RepeatabilityOfTask.MONTHLY;
-                break;
-            case 5:
-                this.repeatabilityOfTask = RepeatabilityOfTask.YEARLY;
-                break;
-            default:
-                System.out.println("Повторяемость задачи указана некорректно - по умолчанию проставлена разовая повторяемость");
-                this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
-                break;
-        }
     }
 
     public LocalDate getDataTask() {

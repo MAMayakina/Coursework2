@@ -2,25 +2,32 @@ package DailyPlanner;
 
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-public class TaskService {
+public class TaskService implements Repeatability{
 
-    public static Map<Integer, Task> dailyPlanner = new HashMap<>();
+    private static Map<Integer, Task> dailyPlanner = new HashMap<>();
 
     public static void addNewTask(Task newTask) {
-        Integer newId = getId();
-        dailyPlanner.put(newId, newTask);
+        dailyPlanner.put(newTask.getId(), newTask);
+        System.out.println("Задача добавлена в мапу");
     }
 
-    public static Integer getId() {
-        Integer id = dailyPlanner.size() + 1;
-        return id;
-    }
 
     public static void removeTask(Integer removeId) {
-        dailyPlanner.get(removeId).setRemoteTask(true);
-        ArchiveTasks.archive.add(dailyPlanner.get(removeId));
+        try {
+            if (dailyPlanner.containsKey(removeId)) {
+                dailyPlanner.get(removeId).setRemoteTask(true);
+                ArchiveTasks.getArchive().add(dailyPlanner.get(removeId));
+            } else {
+                throw new InvalidParametrException();
+            }
+        } catch (InvalidParametrException e) {
+            System.out.println("Задачи с таким id не существует");
+        }
     }
 
 
@@ -31,7 +38,7 @@ public class TaskService {
         }
     }
 
-    public static void printDailyPlannerOnDate(LocalDate data) throws ParseException {
+    public static List getDailyPlannerOnDate(LocalDate data)  {
         System.out.println("Задачи на день " + data + ":");
         List<Task> todayTasks = new LinkedList<>();
         //заполняем список
@@ -41,13 +48,14 @@ public class TaskService {
             }
         }
         //выводим список
-       if (todayTasks.size() == 0) {
+        if (todayTasks.size() == 0) {
             System.out.println("Задач в указанную дату нет");
         } else {
             for (int i = 0; i < todayTasks.size(); i++) {
-                System.out.println((i+1) + ". Задача (id-" + i + ") " + todayTasks.get(i));
+                System.out.println((i + 1) + ". Задача (id-" + i + ") " + todayTasks.get(i));
             }
         }
+        return todayTasks;
     }
 
     public static boolean checkTask(Task task, LocalDate setData) {
@@ -55,7 +63,7 @@ public class TaskService {
         while (true) {
             if (dataRepeatTask.isEqual(setData)) {
                 return true;
-            } else if (task.getRepeatabilityOfTask().equals(Task.RepeatabilityOfTask.SINGLE)) {
+            } else if (task.getRepeatabilityOfTask().equals(RepeatabilityOfTask.SINGLE)) {
                 return false;
             } else if (dataRepeatTask.isAfter(setData)) {
                 return false;
@@ -83,20 +91,23 @@ public class TaskService {
         return dataRepeat;
     }
 
-    public static void groupingTasks() throws ParseException {
+    public static void groupingTasks() {
+        Map<LocalDate, List<Task>> groupingTasks = new HashMap<>();
+        for (int i = 1; i <= dailyPlanner.size(); i++) {
+            if (!groupingTasks.containsKey(dailyPlanner.get(i).getDataTask())) {
+                groupingTasks.put(dailyPlanner.get(i).getDataTask(), getDailyPlannerOnDate(dailyPlanner.get(i).getDataTask()));
+            }
+        }
         System.out.println("Задачи, сгруппированные по датам");
-        List<LocalDate> listDates = getAllDates();
-        for (LocalDate date : listDates) {
-            printDailyPlannerOnDate(date);
+        for (Map.Entry<LocalDate, List<Task>> entry : groupingTasks.entrySet()) {
+            System.out.println(entry.getKey());
+            for (int i = 0; i < entry.getValue().size(); i++) {
+                System.out.println(entry.getValue().get(i));
+            }
         }
     }
 
-    public static List getAllDates() {
-        List<LocalDate> allDates = new LinkedList<>();
-        for (int i = 1; i <= dailyPlanner.size(); i++) {
-            allDates.add(dailyPlanner.get(i).getDataTask());
-        }
-        return allDates;
-
+    public static Map<Integer, Task> getDailyPlanner() {
+        return dailyPlanner;
     }
 }
