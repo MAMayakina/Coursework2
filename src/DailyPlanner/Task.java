@@ -1,79 +1,84 @@
 package DailyPlanner;
 
+import TypeRepeatability.*;
+
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static DailyPlanner.RepeatabilityOfTask.*;
+
+
 
 public class Task {
-    private int id;
+    private static final AtomicInteger COUNTER = new AtomicInteger(1);
+
+    private int id ;
     private String nameTask;
     private String descriptionTask;
     private TypeTask typeTask;
     private RepeatabilityOfTask repeatabilityOfTask;
+    private Repeatability repeatability;
     private LocalDate dataTask;
 
     private boolean isRemoteTask;
 
-    public Task(String nameTask, String descriptionTask, int typeTask, int repeatabilityOfTask, LocalDate dataTask) {
-        this.id = TaskService.getDailyPlanner().size() + 1;
-        try {
-            if (nameTask != null && !nameTask.isEmpty()) {
-                this.nameTask = nameTask;
-            } else {
-                throw new InvalidParametrException();
-            }
-        } catch (InvalidParametrException e) {
-            System.out.println("Введите корректный заголовок задачи");
-            this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
+
+    public Task(String nameTask, String descriptionTask, TypeTask typeTask, RepeatabilityOfTask repeatabilityOfTask, LocalDate dataTask) throws InvalidParametrException {
+        this.id = COUNTER.getAndIncrement();
+
+        if (nameTask != null && !nameTask.isEmpty()) {
+            this.nameTask = nameTask;
+        } else {
+            throw new InvalidParametrException();
         }
+
 
         this.descriptionTask = descriptionTask;
 
-        try {
-            switch (typeTask) {
-                case 1:
-                    this.typeTask = TypeTask.WORKING;
-                    break;
-                case 2:
-                    this.typeTask = TypeTask.PERSONAL;
-                    break;
-                default:
-                    throw new InvalidParametrException();
-            }
-        } catch (InvalidParametrException e) {
-            System.out.println("Некорректно введен тип задачи - по умолчанию проставлен личный тип");
-            this.typeTask = TypeTask.PERSONAL;
-        }
 
-        try {
-            switch (repeatabilityOfTask) {
-                case 1:
-                    this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
-                    break;
-                case 2:
-                    this.repeatabilityOfTask = RepeatabilityOfTask.DAILY;
-                    break;
-                case 3:
-                    this.repeatabilityOfTask = RepeatabilityOfTask.WEEKLY;
-                    break;
-                case 4:
-                    this.repeatabilityOfTask = RepeatabilityOfTask.MONTHLY;
-                    break;
-                case 5:
-                    this.repeatabilityOfTask = RepeatabilityOfTask.YEARLY;
-                    break;
-                default:
-                    throw new InvalidParametrException();
-            }
-        } catch (InvalidParametrException e) {
-            System.out.println("Повторяемость задачи указана некорректно - по умолчанию проставлена разовая повторяемость");
-            this.repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
+        switch (typeTask) {
+            case WORKING:
+                this.typeTask = TypeTask.WORKING;
+                break;
+            case PERSONAL:
+                this.typeTask = TypeTask.PERSONAL;
+                break;
+            default:
+                System.out.println("Некорректно введен тип задачи - по умолчанию проставлен личный тип");
+                this.typeTask = TypeTask.PERSONAL;
+        }
+        switch (repeatabilityOfTask) {
+            case SINGLE:
+                this.repeatabilityOfTask = SINGLE;
+                this.repeatability = new SingleRepeatability();
+                break;
+            case DAILY:
+                this.repeatabilityOfTask = DAILY;
+                this.repeatability = new DailyRepeatability();
+                break;
+            case WEEKLY:
+                this.repeatabilityOfTask = WEEKLY;
+                this.repeatability = new WeeklyRepeatability();
+                break;
+            case MONTHLY:
+                this.repeatabilityOfTask = MONTHLY;
+                this.repeatability = new MonthlyRepeatability();
+                break;
+            case YEARLY:
+                this.repeatabilityOfTask = YEARLY;
+                this.repeatability = new YearlyRepeatability();
+                break;
+            default:
+                System.out.println("Повторяемость задачи указана некорректно - по умолчанию проставлена разовая повторяемость");
+                this.repeatabilityOfTask = SINGLE;
+                this.repeatability = new SingleRepeatability();
         }
 
         this.dataTask = dataTask;
 
         this.isRemoteTask = false;
 
-        System.out.println(TaskService.getDailyPlanner().size());
     }
 
     @Override
@@ -99,12 +104,12 @@ public class Task {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
-        return isRemoteTask == task.isRemoteTask && Objects.equals(nameTask, task.nameTask) && Objects.equals(descriptionTask, task.descriptionTask) && typeTask == task.typeTask && repeatabilityOfTask == task.repeatabilityOfTask && Objects.equals(dataTask, task.dataTask);
+        return id == task.id && isRemoteTask == task.isRemoteTask && Objects.equals(nameTask, task.nameTask) && Objects.equals(descriptionTask, task.descriptionTask) && typeTask == task.typeTask && Objects.equals(repeatability, task.repeatability) && Objects.equals(dataTask, task.dataTask);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nameTask, descriptionTask, typeTask, repeatabilityOfTask, dataTask, isRemoteTask);
+        return Objects.hash(id, nameTask, descriptionTask, typeTask, repeatability, dataTask, isRemoteTask);
     }
 
     public int getId() {
@@ -137,6 +142,10 @@ public class Task {
 
     public RepeatabilityOfTask getRepeatabilityOfTask() {
         return repeatabilityOfTask;
+    }
+
+    public Repeatability getRepeatability() {
+        return repeatability;
     }
 
     public LocalDate getDataTask() {
