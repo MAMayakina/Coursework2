@@ -1,15 +1,21 @@
-import DailyPlanner.*;
+import DailyPlanner.Task;
+import DailyPlanner.TaskService;
+import DailyPlanner.TypeTask;
+import MyException.InvalidParametrIdException;
+import MyException.InvalidParametrNameException;
+import MyException.InvalidParametrRepeatabilityException;
+import MyException.InvalidParametrTypeException;
 
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Scanner;
 
 import static DailyPlanner.ArchiveTasks.printArchive;
 import static DailyPlanner.TaskService.*;
+import static DailyPlanner.TypeTask.PERSONAL;
 
 
 public class Main {
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) throws InvalidParametrIdException {
         try (Scanner scanner = new Scanner(System.in)) {
             label:
             while (true) {
@@ -33,7 +39,7 @@ public class Main {
                             getAllTasks();
                             break;
                         case 6:
-                            getAllTasks();
+                            getArchive();
                             break;
                         case 0:
                             break label;
@@ -50,56 +56,90 @@ public class Main {
     private static void inputTask(Scanner scanner) {
         System.out.print("Введите название задачи: ");
         scanner.nextLine();
-        String nameTask = scanner.nextLine();
+        String nameTask;
+        try {
+            nameTask = checkNameTask(scanner.nextLine());
+        } catch (InvalidParametrNameException e) {
+            System.out.println("Введено некорректное имя задачи! По умолчанию проставлено имя \"Задача\"");
+            nameTask = "Задача";
+        }
 
         System.out.print("Введите описание задачи: ");
         String descriptionTask = scanner.nextLine();
 
-        System.out.print("Введите тип задачи: " + TypeTask.WORKING + ", " + TypeTask.PERSONAL + " ");
+        System.out.print("Введите тип задачи: " + TypeTask.WORKING.getType() + ", " + PERSONAL.getType() + " ");
         TypeTask typeTask;
+        String typeTaskString = scanner.nextLine();
         try {
-            typeTask = TypeTask.valueOf(scanner.nextLine());
-        } catch (RuntimeException e) {
-            System.out.println("Тип задачи указан некорректно. По умолчанию проставлен PERSONAL");
-            typeTask = TypeTask.PERSONAL;
+            typeTask = checkTypeTask(typeTaskString);
+        } catch (InvalidParametrTypeException e) {
+            System.out.println("Введен некорректный тип задачи! По умолчанию проставлен тип личная");
+            typeTask = PERSONAL;
         }
 
-        System.out.print("Введите повторяемость задачи: " + RepeatabilityOfTask.SINGLE + ", " + RepeatabilityOfTask.DAILY + ", " + RepeatabilityOfTask.WEEKLY + ", " + RepeatabilityOfTask.MONTHLY + ", " + RepeatabilityOfTask.YEARLY + " ");
-        RepeatabilityOfTask repeatabilityOfTask;
+        int repeatabilityOfTask;
+        System.out.print("Выберите повторяемость задачи по номеру: 1.разовая, 2.ежедневная, 3.еженедельная, 4.ежемесячная, 5.ежегодная ");
         try {
-            repeatabilityOfTask = RepeatabilityOfTask.valueOf(scanner.nextLine());
+            repeatabilityOfTask = checkRepeatabilityTask(Integer.parseInt(scanner.nextLine()));
+        } catch (InvalidParametrRepeatabilityException e) {
+            System.out.println("Введено некорректное значение повторяемости! По умолчанию проставлена повторяемость разовая");
+            repeatabilityOfTask = 1;
         } catch (RuntimeException e) {
-            System.out.println("Повторяемость задачи указана некорректно. По умолчанию проставлено SINGLE");
-            repeatabilityOfTask = RepeatabilityOfTask.SINGLE;
+            System.out.println("Введено некорректное значение повторяемости! По умолчанию проставлена повторяемость разовая");
+            repeatabilityOfTask = 1;
         }
 
         System.out.print("Введите дату задачи в формате \"yyyy-mm-dd\": ");
-        LocalDate dataTask;
-        try {
-            dataTask = LocalDate.parse(scanner.next());
-        } catch (RuntimeException e) {
-            System.out.println("Дата введена некорректно. Полю дата присвоен сегодняшний день");
-            dataTask = LocalDate.now();
-        }
+        LocalDate dataTask = LocalDate.parse(scanner.next());
 
-        try {
-            Task newTask = new Task(nameTask, descriptionTask, typeTask, repeatabilityOfTask, dataTask);
-            TaskService.addNewTask(newTask);
-        } catch (InvalidParametrException e) {
-            System.out.println("Введите корректный заголовок задачи");
-        }
+        Task newTask = new Task(nameTask, descriptionTask, typeTask, repeatabilityOfTask, dataTask);
+        TaskService.addNewTask(newTask);
 
     }
 
-    private static void deleteTask(Scanner scanner) {
+    private static String checkNameTask(String nameTask) throws InvalidParametrNameException {
+        if (nameTask != null && !nameTask.isEmpty()) {
+            return nameTask;
+        } else {
+            throw new InvalidParametrNameException();
+        }
+    }
+
+    private static TypeTask checkTypeTask(String typeTaskString) throws InvalidParametrTypeException {
+        for (TypeTask type : TypeTask.values()) {
+            if (type.getType().equals(typeTaskString)) {
+                return type;
+            }
+        }
+        throw new InvalidParametrTypeException();
+    }
+
+    private static int checkRepeatabilityTask(int repeatability) throws InvalidParametrRepeatabilityException {
+        if (repeatability > 0 && repeatability <= 5) {
+            return repeatability;
+        } else {
+            throw new InvalidParametrRepeatabilityException();
+        }
+    }
+
+    private static int checkRemoveId(int removeId) throws InvalidParametrIdException {
+        if (getDailyPlanner().containsKey(removeId)) {
+            return removeId;
+        } else {
+            throw new InvalidParametrIdException();
+        }
+    }
+
+    private static void deleteTask(Scanner scanner) throws InvalidParametrIdException, RuntimeException {
         System.out.println("Введите id задачи которую хотите удалить");
         printDailyPlanner();
-        Integer removeId = Integer.valueOf(scanner.next());
-
         try {
-        removeTask(removeId);
-        } catch (InvalidParametrException e) {
-            System.out.println("Задачи с таким id не существует");
+            int removeId = checkRemoveId(Integer.valueOf(scanner.next()));
+            removeTask(removeId);
+        } catch (InvalidParametrIdException e) {
+            System.out.println("Задачи с таким Id не существует!");
+        } catch (RuntimeException e) {
+            System.out.println("Задачи с таким Id не существует!");
         }
     }
 
@@ -109,7 +149,7 @@ public class Main {
         getDailyPlannerOnDate(dateTask);
     }
 
-    private static void groupingTasksByDate() throws ParseException {
+    private static void groupingTasksByDate()  {
         groupingTasks();
     }
 

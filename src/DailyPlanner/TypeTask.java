@@ -1,5 +1,7 @@
 package DailyPlanner;
 
+import MyException.InvalidParametrTypeException;
+
 public enum TypeTask {
     WORKING("рабочая"),
     PERSONAL("личная");
@@ -24,10 +26,10 @@ public enum TypeTask {
                     this.type = String.valueOf(PERSONAL);
                     break;
                 default:
-                    throw new InvalidParametrException();
+                    throw new InvalidParametrTypeException();
             }
-        } catch (InvalidParametrException e) {
-            System.out.println("Некорректно введен тип задачи - по умолчанию проставлен личный тип");
+        } catch (InvalidParametrTypeException e) {
+            System.out.println("Некорректно введен тип задачи - по умолчанию проставлен тип PERSONAL");
             this.type = String.valueOf(PERSONAL);
         }
     }

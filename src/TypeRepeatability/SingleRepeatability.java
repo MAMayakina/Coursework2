@@ -1,16 +1,16 @@
 package TypeRepeatability;
 
 import DailyPlanner.Repeatability;
-import DailyPlanner.RepeatabilityOfTask;
-import DailyPlanner.Task;
 
 import java.time.LocalDate;
 
 public class SingleRepeatability implements Repeatability {
 
-
-    static LocalDate nextRepeat(LocalDate dataRepeat) {
+    public LocalDate nextRepeat(LocalDate dataRepeat) {
         return null;
     }
 
+    public String getRepeatabilityOfTask() {
+        return "разовая";
+    }
 }
